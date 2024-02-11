@@ -41,8 +41,8 @@ P.S. You can delete this when you're done too. It's your config now :)
 -- Set <space> as the leader key
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are required (otherwise wrong leader will be used)
-vim.g.mapleader = ' '
-vim.g.maplocalleader = ' '
+vim.g.mapleader = '\\'
+vim.g.maplocalleader = '\\'
 
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    https://github.com/folke/lazy.nvim
@@ -269,6 +269,11 @@ require('lazy').setup({
     },
     build = ':TSUpdate',
   },
+-- for colorschemes
+--  {
+--    'tomasr/molokai',
+--    'tanvirtin/monokai.nvim',
+--  },
 
   -- NOTE: Next Step on Your Neovim Journey: Add/Configure additional "plugins" for kickstart
   --       These are some example plugins that I've included in the kickstart repository.
@@ -679,6 +684,47 @@ cmp.setup {
     { name = 'path' },
   },
 }
+
+
+vim.cmd([[
+  "colorscheme molokai
+  set nohlsearch
+  set nu
+  set noshowmatch
+
+  set sw=2
+  set tabstop=4
+  set updatetime=100
+  map qq :bd<cr>
+  function! g:FuckThatMatchParen ()
+      if exists(":NoMatchParen")
+	  :NoMatchParen
+      endif
+  endfunction
+
+  augroup plugin_initialize
+      autocmd!
+      autocmd VimEnter * call FuckThatMatchParen()
+  augroup END
+]])
+
+-- Custom key mappings, which i always need
+vim.keymap.set("n", "-", vim.cmd.Ex) -- need nvim 0.8+
+vim.keymap.set('n', '<Tab>', vim.cmd.bnext)
+vim.keymap.set('n', '<S-Tab>', vim.cmd.bprevious)
+vim.keymap.set('n','<leader>c', vim.cmd.cclose)
+vim.keymap.set('n','<C-n>', vim.cmd.cnext)
+vim.keymap.set('n','<C-p>', vim.cmd.cprevious)
+
+
+-- Restore cursor position
+vim.api.nvim_create_autocmd({ "BufReadPost" }, {
+    pattern = { "*" },
+    callback = function()
+        vim.api.nvim_exec('silent! normal! g`"zv', false)
+    end,
+})
+
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
