@@ -23,6 +23,8 @@ vim.cmd([[
       autocmd!
       autocmd VimEnter * call FuckThatMatchParen()
   augroup END
+  nnoremap c "_c
+  nnoremap C "_C
 ]])
 
 -- Custom key mappings, which i always need
@@ -44,7 +46,6 @@ vim.api.nvim_create_autocmd({ "BufReadPost" }, {
 })
 ]]--
 -- vim.opt.termguicolors = true
--- require("bufferline").setup{}
 
 return {
 }

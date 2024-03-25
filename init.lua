@@ -88,7 +88,7 @@ require('lazy').setup({
 
       -- Useful status updates for LSP
       -- NOTE: `opts = {}` is the same as calling `require('fidget').setup({})`
-      { 'j-hui/fidget.nvim', opts = {} },
+      { 'j-hui/fidget.nvim',       opts = {} },
 
       -- Additional lua configuration, makes nvim stuff amazing!
       'folke/neodev.nvim',
@@ -127,7 +127,7 @@ require('lazy').setup({
   {
     'folke/which-key.nvim',
     opts = {},
-    config = function ()
+    config = function()
       require('which-key').setup({
         plugins = {
           marks = true,
@@ -248,7 +248,7 @@ require('lazy').setup({
   },
 
   -- "gc" to comment visual regions/lines
-  { 'numToStr/Comment.nvim', opts = {} },
+  { 'numToStr/Comment.nvim',  opts = {} },
 
   -- Fuzzy Finder (files, lsp, etc)
   {
@@ -317,7 +317,7 @@ vim.o.clipboard = 'unnamedplus'
 vim.o.breakindent = true
 
 -- Save undo history
-vim.o.undofile = true
+-- vim.o.undofile = true
 
 -- Case-insensitive searching UNLESS \C or capital in search
 vim.o.ignorecase = true
@@ -562,6 +562,9 @@ local on_attach = function(_, bufnr)
   vim.api.nvim_buf_create_user_command(bufnr, 'Format', function(_)
     vim.lsp.buf.format()
   end, { desc = 'Format current buffer with LSP' })
+  nmap('<leader>F', function ()
+    vim.lsp.buf.format()
+  end, {desc = 'Format current buffer with LSP'})
 end
 
 -- document existing key chains
@@ -600,7 +603,15 @@ require('mason-lspconfig').setup()
 --  define the property 'filetypes' to the map in question.
 local servers = {
   -- clangd = {},
-  -- gopls = {},
+  gopls = {
+    experimentalPostfixCompletions = true,
+    analyses = {
+      unusedparams = true,
+      shadow = true,
+    },
+    staticcheck = true,
+    env = { GOFLAGS = "-tags=bcc,libbpf,gpu,vimal" },
+  },
   -- pyright = {},
   -- rust_analyzer = {},
   -- tsserver = {},
@@ -692,6 +703,10 @@ cmp.setup {
     { name = 'path' },
   },
 }
+
+-- couldn't really place this line in custom plugin configs
+require("bufferline").setup {}
+require("remember").setup{}
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
