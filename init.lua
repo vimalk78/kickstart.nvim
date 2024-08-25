@@ -124,16 +124,34 @@ require('lazy').setup({
   },
 
   -- Useful plugin to show you pending keybinds.
+  -- {
+  --   'folke/which-key.nvim',
+  --   opts = {},
+  --   config = function()
+  --     require('which-key').setup({
+  --       plugins = {
+  --         marks = true,
+  --       },
+  --     })
+  --   end
+  -- },
   {
-    'folke/which-key.nvim',
-    opts = {},
-    config = function()
-      require('which-key').setup({
-        plugins = {
-          marks = true,
-        },
-      })
-    end
+    "folke/which-key.nvim",
+    event = "VeryLazy",
+    opts = {
+      -- your configuration comes here
+      -- or leave it empty to use the default settings
+      -- refer to the configuration section below
+    },
+    keys = {
+      {
+        "<leader>?",
+        function()
+          require("which-key").show({ global = false })
+        end,
+        desc = "Buffer Local Keymaps (which-key)",
+      },
+    },
   },
   {
     -- Adds git related signs to the gutter, as well as utilities for managing changes
@@ -620,24 +638,12 @@ local on_attach = function(_, bufnr)
 end
 
 -- document existing key chains
-require('which-key').register {
-  ['<leader>c'] = { name = '[C]ode', _ = 'which_key_ignore' },
-  ['<leader>d'] = { name = '[D]ocument', _ = 'which_key_ignore' },
-  ['<leader>g'] = { name = '[G]it', _ = 'which_key_ignore' },
-  ['<leader>h'] = { name = 'Git [H]unk', _ = 'which_key_ignore' },
-  ['<leader>r'] = { name = '[R]ename', _ = 'which_key_ignore' },
-  ['<leader>s'] = { name = '[S]earch', _ = 'which_key_ignore' },
-  ['<leader>t'] = { name = '[T]oggle', _ = 'which_key_ignore' },
-  ['<leader>w'] = { name = '[W]orkspace', _ = 'which_key_ignore' },
-  ['<Tab>'] = { name = 'next buffer', _ = 'which_key_ignore' },
-  ['<S-Tab>'] = { name = 'previous buffer', _ = 'which_key_ignore' },
-}
--- register which-key VISUAL mode
--- required for visual <leader>hs (hunk stage) to work
-require('which-key').register({
-  ['<leader>'] = { name = 'VISUAL <leader>' },
-  ['<leader>h'] = { 'Git [H]unk' },
-}, { mode = 'v' })
+local wk = require("which-key")
+wk.add({
+  mode = { "n", "v" },
+  {'<Tab>', desc= "Next buffer"},
+  {'<S-Tab>', desc= "Prev buffer"}
+})
 
 
 -- mason-lspconfig requires that these setup functions are called in this order
