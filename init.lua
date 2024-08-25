@@ -210,19 +210,73 @@ require('lazy').setup({
     },
   },
 
+  -- START OF COLORSCHEMES SECTION
+
+  -- NEVER DELETE THIS SECTION
+  -- {
+  --   -- Theme inspired by Atom
+  --   'navarasu/onedark.nvim',
+  --   priority = 1000,
+  --   lazy = false,
+  --   config = function()
+  --     require('onedark').setup {
+  --       -- Set a style preset. 'dark' is default.
+  --       style = 'darker', -- dark, darker, cool, deep, warm, warmer, light
+  --     }
+  --     require('onedark').load()
+  --   end,
+  -- },
+  -- NEVER DELETE THIS SECTION
+
+  -- {
+  --   "steguiosaur/fullerene.nvim",
+  --   lazy = false,
+  --   priority = 1000,
+  --   config = function ()
+  --     vim.cmd.colorscheme('fullerene')
+  --   end
+  -- },
+
+  -- {
+  --   "slugbyte/lackluster.nvim",
+  --   lazy = false,
+  --   priority = 1000,
+  --   init = function()
+  --     -- vim.cmd.colorscheme("lackluster")
+  --     vim.cmd.colorscheme("lackluster-hack") -- my favorite
+  --     -- vim.cmd.colorscheme("lackluster-mint")
+  --   end,
+  -- },
+
+  -- {
+  --   'sainnhe/everforest',
+  --   lazy = false,
+  --   priority = 1000,
+  --   config = function()
+  --     -- Optionally configure and load the colorscheme
+  --     -- directly inside the plugin declaration.
+  --     vim.g.everforest_enable_italic = true
+  --     vim.g.background = 'dark'
+  --     vim.cmd.colorscheme('everforest')
+  --   end
+  -- },
+
   {
-    -- Theme inspired by Atom
-    'navarasu/onedark.nvim',
-    priority = 1000,
+    'sainnhe/sonokai',
     lazy = false,
+    priority = 1000,
     config = function()
-      require('onedark').setup {
-        -- Set a style preset. 'dark' is default.
-        style = 'dark', -- dark, darker, cool, deep, warm, warmer, light
-      }
-      require('onedark').load()
-    end,
+      -- Optionally configure and load the colorscheme
+      -- directly inside the plugin declaration.
+      vim.g.sonokai_enable_italic = true
+      -- vim.g.sonokai_style = 'andromeda'
+      -- vim.g.sonokai_style = 'maia'
+      vim.g.sonokai_style = 'atlantis'
+      vim.cmd.colorscheme('sonokai')
+    end
   },
+
+  -- END OF COLORSCHEMES SECTION
 
   {
     -- Set lualine as statusline
@@ -238,14 +292,14 @@ require('lazy').setup({
     },
   },
 
-  {
-    -- Add indentation guides even on blank lines
-    'lukas-reineke/indent-blankline.nvim',
-    -- Enable `lukas-reineke/indent-blankline.nvim`
-    -- See `:help ibl`
-    main = 'ibl',
-    opts = {},
-  },
+  -- {
+  --   -- Add indentation guides even on blank lines
+  --   'lukas-reineke/indent-blankline.nvim',
+  --   -- Enable `lukas-reineke/indent-blankline.nvim`
+  --   -- See `:help ibl`
+  --   main = 'ibl',
+  --   opts = {},
+  -- },
 
   -- "gc" to comment visual regions/lines
   { 'numToStr/Comment.nvim',  opts = {} },
@@ -562,9 +616,7 @@ local on_attach = function(_, bufnr)
   vim.api.nvim_buf_create_user_command(bufnr, 'Format', function(_)
     vim.lsp.buf.format()
   end, { desc = 'Format current buffer with LSP' })
-  nmap('<leader>F', function ()
-    vim.lsp.buf.format()
-  end, {desc = 'Format current buffer with LSP'})
+  nmap('<leader>F', vim.lsp.buf.format, '[F]ormat')
 end
 
 -- document existing key chains
@@ -706,7 +758,28 @@ cmp.setup {
 
 -- couldn't really place this line in custom plugin configs
 require("bufferline").setup {}
-require("remember").setup{}
+require("remember").setup {}
+
+-- pylsp (python language server) config
+require 'lspconfig'.pylsp.setup {
+  settings = {
+    pylsp = {
+      plugins = {
+        pycodestyle = {
+          ignore = { 'E501' },
+          maxLineLength = 100
+        }
+      }
+    }
+  }
+}
+
+
+vim.opt.background = "dark" -- set this to dark or light
+-- vim.cmd.colorscheme("fullerene")
+vim.opt.listchars = {
+  tab = '  '
+}
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
