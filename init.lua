@@ -237,68 +237,35 @@ require('lazy').setup({
   -- START OF COLORSCHEMES SECTION
 
   -- NEVER DELETE THIS SECTION
-  -- {
-  --   -- Theme inspired by Atom
-  --   'navarasu/onedark.nvim',
-  --   priority = 1000,
-  --   lazy = false,
-  --   config = function()
-  --     require('onedark').setup {
-  --       -- Set a style preset. 'dark' is default.
-  --       style = 'darker', -- dark, darker, cool, deep, warm, warmer, light
-  --     }
-  --     require('onedark').load()
-  --   end,
-  -- },
+  {
+    -- Theme inspired by Atom
+    'navarasu/onedark.nvim',
+    priority = 1000,
+    lazy = false,
+    config = function()
+      require('onedark').setup {
+        -- Set a style preset. 'dark' is default.
+        style = 'darker', -- dark, darker, cool, deep, warm, warmer, light
+      }
+      require('onedark').load()
+    end,
+  },
   -- NEVER DELETE THIS SECTION
 
   -- {
-  --   "steguiosaur/fullerene.nvim",
-  --   lazy = false,
-  --   priority = 1000,
-  --   config = function ()
-  --     vim.cmd.colorscheme('fullerene')
-  --   end
-  -- },
-
-  -- {
-  --   "slugbyte/lackluster.nvim",
-  --   lazy = false,
-  --   priority = 1000,
-  --   init = function()
-  --     -- vim.cmd.colorscheme("lackluster")
-  --     vim.cmd.colorscheme("lackluster-hack") -- my favorite
-  --     -- vim.cmd.colorscheme("lackluster-mint")
-  --   end,
-  -- },
-
-  -- {
-  --   'sainnhe/everforest',
+  --   'sainnhe/sonokai',
   --   lazy = false,
   --   priority = 1000,
   --   config = function()
   --     -- Optionally configure and load the colorscheme
   --     -- directly inside the plugin declaration.
-  --     vim.g.everforest_enable_italic = true
-  --     vim.g.background = 'dark'
-  --     vim.cmd.colorscheme('everforest')
+  --     vim.g.sonokai_enable_italic = true
+  --     -- vim.g.sonokai_style = 'andromeda'
+  --     -- vim.g.sonokai_style = 'maia'
+  --     vim.g.sonokai_style = 'atlantis'
+  --     vim.cmd.colorscheme('sonokai')
   --   end
   -- },
-
-  {
-    'sainnhe/sonokai',
-    lazy = false,
-    priority = 1000,
-    config = function()
-      -- Optionally configure and load the colorscheme
-      -- directly inside the plugin declaration.
-      vim.g.sonokai_enable_italic = true
-      -- vim.g.sonokai_style = 'andromeda'
-      -- vim.g.sonokai_style = 'maia'
-      vim.g.sonokai_style = 'atlantis'
-      vim.cmd.colorscheme('sonokai')
-    end
-  },
 
   -- END OF COLORSCHEMES SECTION
 
@@ -316,14 +283,14 @@ require('lazy').setup({
     },
   },
 
-  -- {
-  --   -- Add indentation guides even on blank lines
-  --   'lukas-reineke/indent-blankline.nvim',
-  --   -- Enable `lukas-reineke/indent-blankline.nvim`
-  --   -- See `:help ibl`
-  --   main = 'ibl',
-  --   opts = {},
-  -- },
+  {
+    -- Add indentation guides even on blank lines
+    'lukas-reineke/indent-blankline.nvim',
+    -- Enable `lukas-reineke/indent-blankline.nvim`
+    -- See `:help ibl`
+    main = 'ibl',
+    opts = {},
+  },
 
   -- "gc" to comment visual regions/lines
   { 'numToStr/Comment.nvim',  opts = {} },
@@ -357,6 +324,16 @@ require('lazy').setup({
     },
     build = ':TSUpdate',
   },
+  {
+    'stevearc/oil.nvim',
+    opts = {},
+    -- Optional dependencies
+    dependencies = { { "echasnovski/mini.icons", opts = {} } },
+    -- dependencies = { "nvim-tree/nvim-web-devicons" }, -- use if prefer nvim-web-devicons
+  },
+  -- {
+  --   'fgheng/winbar.nvim',
+  -- },
 
   -- NOTE: Next Step on Your Neovim Journey: Add/Configure additional "plugins" for kickstart
   --       These are some example plugins that I've included in the kickstart repository.
@@ -647,8 +624,8 @@ end
 local wk = require("which-key")
 wk.add({
   mode = { "n", "v" },
-  {'<Tab>', desc= "Next buffer"},
-  {'<S-Tab>', desc= "Prev buffer"}
+  { '<Tab>',   desc = "Next buffer" },
+  { '<S-Tab>', desc = "Prev buffer" }
 })
 
 
@@ -772,26 +749,141 @@ cmp.setup {
 require("bufferline").setup {}
 require("remember").setup {}
 
--- pylsp (python language server) config
-require 'lspconfig'.pylsp.setup {
-  settings = {
-    pylsp = {
-      plugins = {
-        pycodestyle = {
-          ignore = { 'E501' },
-          maxLineLength = 100
-        }
-      }
-    }
-  }
-}
+-- Configure Pyright
+require 'lspconfig'.pyright.setup({
+  on_attach = function(client, bufnr)
+    -- Key mappings for LSP
+    local nmap = function(keys, func, desc)
+      if desc then
+        desc = 'LSP: ' .. desc
+      end
+      vim.keymap.set('n', keys, func, { buffer = bufnr, desc = desc })
+    end
 
+    nmap('gd', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
+    nmap('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
+    nmap('gI', require('telescope.builtin').lsp_implementations, '[G]oto [I]mplementation')
+    nmap('<leader>D', require('telescope.builtin').lsp_type_definitions, 'Type [D]efinition')
+    nmap('<leader>ds', require('telescope.builtin').lsp_document_symbols, '[D]ocument [S]ymbols')
+    nmap('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
+  end,
+  settings = {
+    python = {
+      analysis = {
+        autoSearchPaths = true,
+        diagnosticMode = "workspace",
+        useLibraryCodeForTypes = true,
+      },
+    },
+  },
+})
 
 vim.opt.background = "dark" -- set this to dark or light
--- vim.cmd.colorscheme("fullerene")
 vim.opt.listchars = {
   tab = '  '
 }
+
+local detail = false
+-- Declare a global function to retrieve the current directory
+function _G.get_oil_winbar()
+  local dir = require("oil").get_current_dir()
+  if dir then
+    return vim.fn.fnamemodify(dir, ":~")
+  else
+    -- If there is no current directory (e.g. over ssh), just show the buffer name
+    return vim.api.nvim_buf_get_name(0)
+  end
+end
+require("oil").setup({
+  -- Oil will take over directory buffers (e.g. `vim .` or `:e src/`)
+  -- Set to false if you want some other plugin (e.g. netrw) to open when you edit directories.
+  default_file_explorer = true,
+  -- Id is automatically added at the beginning, and name at the end
+  -- See :help oil-columns
+  columns = {
+    "icon",
+    -- "size",
+    -- "permissions",
+    -- "mtime",
+  },
+  watch_for_changes = true,
+  view_options = {
+    -- Show files and directories that start with "."
+    show_hidden = true,
+    -- This function defines what is considered a "hidden" file
+    is_hidden_file = function(name, bufnr)
+      return vim.startswith(name, ".")
+    end,
+    -- This function defines what will never be shown, even when `show_hidden` is set
+    is_always_hidden = function(name, bufnr)
+      return false
+    end,
+    -- Sort file names in a more intuitive order for humans. Is less performant,
+    -- so you may want to set to false if you work with large directories.
+    natural_order = true,
+    -- Sort file and directory names case insensitive
+    case_insensitive = false,
+    sort = {
+      -- sort order can be "asc" or "desc"
+      -- see :help oil-columns to see which columns are sortable
+      { "type", "asc" },
+      { "name", "asc" },
+    },
+  },
+  keymaps = {
+    ["gd"] = {
+      desc = "Toggle file detail view",
+      callback = function()
+        detail = not detail
+        if detail then
+          require("oil").set_columns({ "icon", "permissions", "size", "mtime" })
+        else
+          require("oil").set_columns({ "icon" })
+        end
+      end,
+    },
+  },
+  -- win_options = {
+  --   winbar = "%!v:lua.get_oil_winbar()",
+  -- },
+})
+vim.keymap.set("n", "-", "<CMD>Oil --float<CR>", { desc = "Open parent directory" })
+
+-- require('winbar').setup({
+--   enabled = true,
+--
+--   show_file_path = true,
+--   show_symbols = true,
+--
+--   colors = {
+--     path = '',     -- You can customize colors like #c946fd
+--     file_name = '',
+--     symbols = '',
+--   },
+--
+--   icons = {
+--     file_icon_default = '',
+--     seperator = '>',
+--     editor_state = '●',
+--     lock_icon = '',
+--   },
+--
+--   exclude_filetype = {
+--     'help',
+--     'startify',
+--     'dashboard',
+--     'packer',
+--     'neogitstatus',
+--     'NvimTree',
+--     'Trouble',
+--     'alpha',
+--     'lir',
+--     'Outline',
+--     'spectre_panel',
+--     'toggleterm',
+--     'qf',
+--   },
+-- })
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
