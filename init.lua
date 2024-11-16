@@ -326,10 +326,19 @@ require('lazy').setup({
   },
   {
     'stevearc/oil.nvim',
+    ---@module 'oil'
+    ---@type oil.SetupOpts
     opts = {},
     -- Optional dependencies
     dependencies = { { "echasnovski/mini.icons", opts = {} } },
     -- dependencies = { "nvim-tree/nvim-web-devicons" }, -- use if prefer nvim-web-devicons
+  },
+  {
+    "refractalize/oil-git-status.nvim",
+    dependencies = {
+      "stevearc/oil.nvim",
+    },
+    config = true,
   },
   -- {
   --   'fgheng/winbar.nvim',
@@ -767,15 +776,6 @@ require 'lspconfig'.pyright.setup({
     nmap('<leader>ds', require('telescope.builtin').lsp_document_symbols, '[D]ocument [S]ymbols')
     nmap('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
   end,
-  settings = {
-    python = {
-      analysis = {
-        autoSearchPaths = true,
-        diagnosticMode = "workspace",
-        useLibraryCodeForTypes = true,
-      },
-    },
-  },
 })
 
 vim.opt.background = "dark" -- set this to dark or light
@@ -794,6 +794,7 @@ function _G.get_oil_winbar()
     return vim.api.nvim_buf_get_name(0)
   end
 end
+
 require("oil").setup({
   -- Oil will take over directory buffers (e.g. `vim .` or `:e src/`)
   -- Set to false if you want some other plugin (e.g. netrw) to open when you edit directories.
@@ -843,11 +844,12 @@ require("oil").setup({
       end,
     },
   },
-  -- win_options = {
-  --   winbar = "%!v:lua.get_oil_winbar()",
-  -- },
+  win_options = {
+    signcolumn = "yes:2",
+    winbar = "%!v:lua.get_oil_winbar()",
+  },
 })
-vim.keymap.set("n", "-", "<CMD>Oil --float<CR>", { desc = "Open parent directory" })
+vim.keymap.set("n", "-", "<CMD>Oil<CR>", { desc = "Open parent directory" })
 
 -- require('winbar').setup({
 --   enabled = true,
@@ -856,7 +858,7 @@ vim.keymap.set("n", "-", "<CMD>Oil --float<CR>", { desc = "Open parent directory
 --   show_symbols = true,
 --
 --   colors = {
---     path = '',     -- You can customize colors like #c946fd
+--     path = '', -- You can customize colors like #c946fd
 --     file_name = '',
 --     symbols = '',
 --   },

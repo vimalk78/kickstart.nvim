@@ -27,9 +27,9 @@ local modules = {
   ["core.dirman"] = {
     config = {
       workspaces = {
-        Notes = "~/Notes/neorg/notes",
-        Work = "~/Notes/neorg/work",
-        ToDos = "~/Notes/neorg/todo",
+        notes = "~/Notes/neorg/notes",
+        work = "~/Notes/neorg/work",
+        todo = "~/Notes/neorg/todo",
       },
       default_workspace = "Notes",
     }
