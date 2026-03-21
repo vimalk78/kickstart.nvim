@@ -724,12 +724,11 @@ mason_lspconfig.setup {
   ensure_installed = vim.tbl_keys(servers),
   handlers = {
     function(server_name)
-      vim.lsp.config(server_name, {
+      require('lspconfig')[server_name].setup {
         capabilities = capabilities,
         settings = servers[server_name],
         filetypes = (servers[server_name] or {}).filetypes,
-      })
-      vim.lsp.enable(server_name)
+      }
     end,
   },
 }
@@ -790,9 +789,6 @@ cmp.setup {
 require("bufferline").setup {}
 require("remember").setup {}
 
--- Configure Pyright
-vim.lsp.config('pyright', {})
-vim.lsp.enable('pyright')
 
 vim.opt.background = "dark" -- set this to dark or light
 vim.opt.listchars = {
