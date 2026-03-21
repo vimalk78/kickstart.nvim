@@ -328,7 +328,43 @@ require('lazy').setup({
     'stevearc/oil.nvim',
     ---@module 'oil'
     ---@type oil.SetupOpts
-    opts = {},
+    opts = {
+      default_file_explorer = true,
+      columns = { "icon" },
+      watch_for_changes = true,
+      view_options = {
+        show_hidden = true,
+        is_hidden_file = function(name, bufnr)
+          return vim.startswith(name, ".")
+        end,
+        is_always_hidden = function(name, bufnr)
+          return false
+        end,
+        natural_order = true,
+        case_insensitive = false,
+        sort = {
+          { "type", "asc" },
+          { "name", "asc" },
+        },
+      },
+      keymaps = {
+        ["gd"] = {
+          desc = "Toggle file detail view",
+          callback = function()
+            detail = not detail
+            if detail then
+              require("oil").set_columns({ "icon", "permissions", "size", "mtime" })
+            else
+              require("oil").set_columns({ "icon" })
+            end
+          end,
+        },
+      },
+      win_options = {
+        signcolumn = "yes:2",
+        winbar = "%!v:lua.get_oil_winbar()",
+      },
+    },
     -- Optional dependencies
     dependencies = { { "echasnovski/mini.icons", opts = {} } },
     -- dependencies = { "nvim-tree/nvim-web-devicons" }, -- use if prefer nvim-web-devicons
@@ -388,7 +424,7 @@ vim.o.ignorecase = true
 vim.o.smartcase = true
 
 -- Keep signcolumn on by default
-vim.wo.signcolumn = 'yes'
+vim.wo.signcolumn = 'yes:2'
 
 -- Decrease update time
 vim.o.updatetime = 250
@@ -582,52 +618,49 @@ vim.defer_fn(function()
 end, 0)
 
 -- [[ Configure LSP ]]
---  This function gets run when an LSP connects to a particular buffer.
-local on_attach = function(_, bufnr)
-  -- NOTE: Remember that lua is a real programming language, and as such it is possible
-  -- to define small helper and utility functions so you don't have to repeat yourself
-  -- many times.
-  --
-  -- In this case, we create a function that lets us more easily define mappings specific
-  -- for LSP related items. It sets the mode, buffer and description for us each time.
-  local nmap = function(keys, func, desc)
-    if desc then
-      desc = 'LSP: ' .. desc
+-- Set up LSP keymaps via LspAttach autocmd (fires for every server that attaches)
+vim.api.nvim_create_autocmd('LspAttach', {
+  group = vim.api.nvim_create_augroup('UserLspConfig', { clear = true }),
+  callback = function(ev)
+    local bufnr = ev.buf
+    local nmap = function(keys, func, desc)
+      if desc then
+        desc = 'LSP: ' .. desc
+      end
+      vim.keymap.set('n', keys, func, { buffer = bufnr, desc = desc })
     end
 
-    vim.keymap.set('n', keys, func, { buffer = bufnr, desc = desc })
-  end
+    nmap('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
+    nmap('<leader>ca', function()
+      vim.lsp.buf.code_action { context = { only = { 'quickfix', 'refactor', 'source' } } }
+    end, '[C]ode [A]ction')
 
-  nmap('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
-  nmap('<leader>ca', function()
-    vim.lsp.buf.code_action { context = { only = { 'quickfix', 'refactor', 'source' } } }
-  end, '[C]ode [A]ction')
+    nmap('gd', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
+    nmap('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
+    nmap('gI', require('telescope.builtin').lsp_implementations, '[G]oto [I]mplementation')
+    nmap('<leader>D', require('telescope.builtin').lsp_type_definitions, 'Type [D]efinition')
+    nmap('<leader>ds', require('telescope.builtin').lsp_document_symbols, '[D]ocument [S]ymbols')
+    nmap('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
 
-  nmap('gd', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
-  nmap('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
-  nmap('gI', require('telescope.builtin').lsp_implementations, '[G]oto [I]mplementation')
-  nmap('<leader>D', require('telescope.builtin').lsp_type_definitions, 'Type [D]efinition')
-  nmap('<leader>ds', require('telescope.builtin').lsp_document_symbols, '[D]ocument [S]ymbols')
-  nmap('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
+    -- See `:help K` for why this keymap
+    nmap('K', vim.lsp.buf.hover, 'Hover Documentation')
+    nmap('<C-k>', vim.lsp.buf.signature_help, 'Signature Documentation')
 
-  -- See `:help K` for why this keymap
-  nmap('K', vim.lsp.buf.hover, 'Hover Documentation')
-  nmap('<C-k>', vim.lsp.buf.signature_help, 'Signature Documentation')
+    -- Lesser used LSP functionality
+    nmap('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
+    nmap('<leader>wa', vim.lsp.buf.add_workspace_folder, '[W]orkspace [A]dd Folder')
+    nmap('<leader>wr', vim.lsp.buf.remove_workspace_folder, '[W]orkspace [R]emove Folder')
+    nmap('<leader>wl', function()
+      print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
+    end, '[W]orkspace [L]ist Folders')
 
-  -- Lesser used LSP functionality
-  nmap('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
-  nmap('<leader>wa', vim.lsp.buf.add_workspace_folder, '[W]orkspace [A]dd Folder')
-  nmap('<leader>wr', vim.lsp.buf.remove_workspace_folder, '[W]orkspace [R]emove Folder')
-  nmap('<leader>wl', function()
-    print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
-  end, '[W]orkspace [L]ist Folders')
-
-  -- Create a command `:Format` local to the LSP buffer
-  vim.api.nvim_buf_create_user_command(bufnr, 'Format', function(_)
-    vim.lsp.buf.format()
-  end, { desc = 'Format current buffer with LSP' })
-  nmap('<leader>F', vim.lsp.buf.format, '[F]ormat')
-end
+    -- Create a command `:Format` local to the LSP buffer
+    vim.api.nvim_buf_create_user_command(bufnr, 'Format', function(_)
+      vim.lsp.buf.format()
+    end, { desc = 'Format current buffer with LSP' })
+    nmap('<leader>F', vim.lsp.buf.format, '[F]ormat')
+  end,
+})
 
 -- document existing key chains
 local wk = require("which-key")
@@ -689,17 +722,16 @@ local mason_lspconfig = require 'mason-lspconfig'
 
 mason_lspconfig.setup {
   ensure_installed = vim.tbl_keys(servers),
-}
-
-mason_lspconfig.setup_handlers {
-  function(server_name)
-    require('lspconfig')[server_name].setup {
-      capabilities = capabilities,
-      on_attach = on_attach,
-      settings = servers[server_name],
-      filetypes = (servers[server_name] or {}).filetypes,
-    }
-  end,
+  handlers = {
+    function(server_name)
+      vim.lsp.config(server_name, {
+        capabilities = capabilities,
+        settings = servers[server_name],
+        filetypes = (servers[server_name] or {}).filetypes,
+      })
+      vim.lsp.enable(server_name)
+    end,
+  },
 }
 
 -- [[ Configure nvim-cmp ]]
@@ -759,24 +791,8 @@ require("bufferline").setup {}
 require("remember").setup {}
 
 -- Configure Pyright
-require 'lspconfig'.pyright.setup({
-  on_attach = function(client, bufnr)
-    -- Key mappings for LSP
-    local nmap = function(keys, func, desc)
-      if desc then
-        desc = 'LSP: ' .. desc
-      end
-      vim.keymap.set('n', keys, func, { buffer = bufnr, desc = desc })
-    end
-
-    nmap('gd', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
-    nmap('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
-    nmap('gI', require('telescope.builtin').lsp_implementations, '[G]oto [I]mplementation')
-    nmap('<leader>D', require('telescope.builtin').lsp_type_definitions, 'Type [D]efinition')
-    nmap('<leader>ds', require('telescope.builtin').lsp_document_symbols, '[D]ocument [S]ymbols')
-    nmap('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
-  end,
-})
+vim.lsp.config('pyright', {})
+vim.lsp.enable('pyright')
 
 vim.opt.background = "dark" -- set this to dark or light
 vim.opt.listchars = {
@@ -795,60 +811,7 @@ function _G.get_oil_winbar()
   end
 end
 
-require("oil").setup({
-  -- Oil will take over directory buffers (e.g. `vim .` or `:e src/`)
-  -- Set to false if you want some other plugin (e.g. netrw) to open when you edit directories.
-  default_file_explorer = true,
-  -- Id is automatically added at the beginning, and name at the end
-  -- See :help oil-columns
-  columns = {
-    "icon",
-    -- "size",
-    -- "permissions",
-    -- "mtime",
-  },
-  watch_for_changes = true,
-  view_options = {
-    -- Show files and directories that start with "."
-    show_hidden = true,
-    -- This function defines what is considered a "hidden" file
-    is_hidden_file = function(name, bufnr)
-      return vim.startswith(name, ".")
-    end,
-    -- This function defines what will never be shown, even when `show_hidden` is set
-    is_always_hidden = function(name, bufnr)
-      return false
-    end,
-    -- Sort file names in a more intuitive order for humans. Is less performant,
-    -- so you may want to set to false if you work with large directories.
-    natural_order = true,
-    -- Sort file and directory names case insensitive
-    case_insensitive = false,
-    sort = {
-      -- sort order can be "asc" or "desc"
-      -- see :help oil-columns to see which columns are sortable
-      { "type", "asc" },
-      { "name", "asc" },
-    },
-  },
-  keymaps = {
-    ["gd"] = {
-      desc = "Toggle file detail view",
-      callback = function()
-        detail = not detail
-        if detail then
-          require("oil").set_columns({ "icon", "permissions", "size", "mtime" })
-        else
-          require("oil").set_columns({ "icon" })
-        end
-      end,
-    },
-  },
-  win_options = {
-    signcolumn = "yes:2",
-    winbar = "%!v:lua.get_oil_winbar()",
-  },
-})
+-- Oil setup is in the lazy plugin spec above
 vim.keymap.set("n", "-", "<CMD>Oil<CR>", { desc = "Open parent directory" })
 
 -- require('winbar').setup({
