@@ -1,0 +1,18 @@
+{
+ "__init__": {
+   "prefix": "__init__",
+   "body": [
+     "def __init__(self) -> None:",
+     "\tsuper().__init__()"
+   ],
+   "description": "Simple __init__ method"
+ },
+ "forward": {
+   "prefix": "forward",
+   "body": [
+     "def forward(self, x):",
+     "\t$0"
+   ],
+   "description": "nn.Module forward method"
+ }
+} 

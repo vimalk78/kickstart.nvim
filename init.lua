@@ -87,11 +87,11 @@ P.S. You can delete this when you're done too. It's your config now! :)
 -- Set <space> as the leader key
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
-vim.g.mapleader = ' '
-vim.g.maplocalleader = ' '
+vim.g.mapleader = '\\'
+vim.g.maplocalleader = '\\'
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = false
+vim.g.have_nerd_font = true
 
 -- [[ Setting options ]]
 -- See `:help vim.o`
@@ -164,6 +164,14 @@ vim.o.scrolloff = 10
 -- See `:help 'confirm'`
 vim.o.confirm = true
 
+-- Custom settings
+vim.o.hlsearch = false
+vim.o.showmatch = false
+vim.o.shiftwidth = 2
+vim.o.tabstop = 4
+vim.o.updatetime = 100
+vim.opt.listchars = { tab = '  ' }
+
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
@@ -211,6 +219,16 @@ vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left wind
 vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+
+-- Custom keybindings
+vim.keymap.set('n', 'qq', '<cmd>bd<CR>', { desc = 'Close buffer' })
+vim.keymap.set('n', '<Tab>', vim.cmd.bnext, { desc = 'Next buffer' })
+vim.keymap.set('n', '<S-Tab>', vim.cmd.bprevious, { desc = 'Previous buffer' })
+vim.keymap.set('n', '<leader>c', vim.cmd.cclose, { desc = 'Close quickfix' })
+vim.keymap.set('n', '<C-n>', vim.cmd.cnext, { desc = 'Next quickfix' })
+vim.keymap.set('n', '<C-p>', vim.cmd.cprevious, { desc = 'Previous quickfix' })
+vim.keymap.set('n', 'c', '"_c')
+vim.keymap.set('n', 'C', '"_C')
 
 -- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
 -- vim.keymap.set("n", "<C-S-h>", "<C-w>H", { desc = "Move window to the left" })
@@ -531,6 +549,17 @@ require('lazy').setup({
       --    That is to say, every time a new file is opened that is associated with
       --    an lsp (for example, opening `main.rs` is associated with `rust_analyzer`) this
       --    function will be executed to configure the current buffer
+      -- Disable ruff hover (let pyright handle it)
+      vim.api.nvim_create_autocmd('LspAttach', {
+        group = vim.api.nvim_create_augroup('lsp-disable-ruff-hover', { clear = true }),
+        callback = function(args)
+          local client = vim.lsp.get_client_by_id(args.data.client_id)
+          if client and client.name == 'ruff' then
+            client.server_capabilities.hoverProvider = false
+          end
+        end,
+      })
+
       vim.api.nvim_create_autocmd('LspAttach', {
         group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
         callback = function(event)
@@ -547,14 +576,19 @@ require('lazy').setup({
           -- Rename the variable under your cursor.
           --  Most Language Servers support renaming across files, etc.
           map('grn', vim.lsp.buf.rename, '[R]e[n]ame')
+          map('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
 
           -- Execute a code action, usually your cursor needs to be on top of an error
           -- or a suggestion from your LSP for this to activate.
           map('gra', vim.lsp.buf.code_action, '[G]oto Code [A]ction', { 'n', 'x' })
+          map('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
 
           -- WARN: This is not Goto Definition, this is Goto Declaration.
           --  For example, in C this would take you to the header.
           map('grD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
+
+          -- Format
+          map('<leader>F', vim.lsp.buf.format, '[F]ormat')
 
           -- The following two autocommands are used to highlight references of the
           -- word under your cursor when your cursor rests there for a little while.
@@ -600,18 +634,30 @@ require('lazy').setup({
       --  See `:help lsp-config` for information about keys and how to configure
       ---@type table<string, vim.lsp.Config>
       local servers = {
-        -- clangd = {},
-        -- gopls = {},
-        -- pyright = {},
-        -- rust_analyzer = {},
-        --
-        -- Some languages (like typescript) have entire language plugins that can be useful:
-        --    https://github.com/pmizio/typescript-tools.nvim
-        --
-        -- But for many setups, the LSP (`ts_ls`) will work just fine
-        -- ts_ls = {},
+        gopls = {
+          settings = {
+            gopls = {
+              experimentalPostfixCompletions = true,
+              analyses = { unusedparams = true, shadow = true },
+              staticcheck = true,
+              env = { GOFLAGS = "-tags=bcc,libbpf,gpu,vimal" },
+            },
+          },
+        },
+        pyright = {
+          settings = {
+            pyright = { disableOrganizeImports = true },
+            python = {
+              analysis = {
+                autoImportCompletions = true,
+                completeFunctionParens = true,
+              },
+            },
+          },
+        },
+        ruff = {},
 
-        stylua = {}, -- Used to format Lua code
+        stylua = {},
 
         -- Special Lua Config, as recommended by neovim help docs
         lua_ls = {
@@ -722,15 +768,13 @@ require('lazy').setup({
           return 'make install_jsregexp'
         end)(),
         dependencies = {
-          -- `friendly-snippets` contains a variety of premade snippets.
-          --    See the README about individual language/framework/plugin snippets:
-          --    https://github.com/rafamadriz/friendly-snippets
-          -- {
-          --   'rafamadriz/friendly-snippets',
-          --   config = function()
-          --     require('luasnip.loaders.from_vscode').lazy_load()
-          --   end,
-          -- },
+          {
+            'rafamadriz/friendly-snippets',
+            config = function()
+              require('luasnip.loaders.from_vscode').lazy_load()
+              require('luasnip.loaders.from_vscode').lazy_load({ paths = { vim.fn.stdpath('config') .. '/snippets' } })
+            end,
+          },
         },
         opts = {},
       },
@@ -775,11 +819,11 @@ require('lazy').setup({
       completion = {
         -- By default, you may press `<c-space>` to show the documentation.
         -- Optionally, set `auto_show = true` to show the documentation after a delay.
-        documentation = { auto_show = false, auto_show_delay_ms = 500 },
+        documentation = { auto_show = true },
       },
 
       sources = {
-        default = { 'lsp', 'path', 'snippets' },
+        default = { 'lsp', 'path', 'snippets', 'buffer' },
       },
 
       snippets = { preset = 'luasnip' },
