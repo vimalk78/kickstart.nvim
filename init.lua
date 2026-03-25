@@ -804,7 +804,7 @@ require('lazy').setup({
         -- <c-k>: Toggle signature help
         --
         -- See :h blink-cmp-config-keymap for defining your own keymap
-        preset = 'default',
+        preset = 'enter',
 
         -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
         --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
@@ -817,8 +817,7 @@ require('lazy').setup({
       },
 
       completion = {
-        -- By default, you may press `<c-space>` to show the documentation.
-        -- Optionally, set `auto_show = true` to show the documentation after a delay.
+        list = { selection = { preselect = false, auto_insert = false } },
         documentation = { auto_show = true },
       },
 
@@ -838,7 +837,20 @@ require('lazy').setup({
       fuzzy = { implementation = 'lua' },
 
       -- Shows a signature help window while you type arguments for a function
-      signature = { enabled = true },
+      signature = { enabled = false },
+    },
+  },
+
+  {
+    'ray-x/lsp_signature.nvim',
+    event = 'LspAttach',
+    opts = {
+      hint_enable = false,
+      handler_opts = { border = 'rounded' },
+      floating_window = true,
+      floating_window_above_cur_line = true,
+      fixed_pos = true,        -- keep window in place, don't follow cursor
+      toggle_key = '<C-k>',    -- Ctrl+K to toggle on/off
     },
   },
 
