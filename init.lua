@@ -229,6 +229,7 @@ vim.keymap.set('n', '<C-n>', vim.cmd.cnext, { desc = 'Next quickfix' })
 vim.keymap.set('n', '<C-p>', vim.cmd.cprevious, { desc = 'Previous quickfix' })
 vim.keymap.set('n', 'c', '"_c')
 vim.keymap.set('n', 'C', '"_C')
+vim.keymap.set('n', '-', '<cmd>Oil<CR>', { desc = 'Open file browser (Oil)' })
 
 -- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
 -- vim.keymap.set("n", "<C-S-h>", "<C-w>H", { desc = "Move window to the left" })
@@ -655,7 +656,14 @@ require('lazy').setup({
             },
           },
         },
-        ruff = {},
+        ruff = {
+          init_options = {
+            settings = { showNotifications = 'off' },
+          },
+          on_attach = function(client)
+            client.server_capabilities.diagnosticProvider = nil
+          end,
+        },
 
         stylua = {},
 
@@ -971,13 +979,18 @@ require('lazy').setup({
   { 'vladdoster/remember.nvim', opts = {} },
   {
     'stevearc/oil.nvim',
-    opts = {
-      default_file_explorer = true,
-      columns = { 'icon' },
-      watch_for_changes = true,
-      view_options = { show_hidden = true },
-    },
     dependencies = { 'nvim-tree/nvim-web-devicons' },
+    config = function()
+      require('oil').setup {
+        default_file_explorer = true,
+        columns = { 'icon' },
+        watch_for_changes = true,
+        view_options = { show_hidden = true },
+        win_options = {
+          signcolumn = 'yes:2',
+        },
+      }
+    end,
   },
   { 'refractalize/oil-git-status.nvim', dependencies = { 'stevearc/oil.nvim' }, config = true },
 }, { ---@diagnostic disable-line: missing-fields
