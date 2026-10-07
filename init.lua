@@ -813,6 +813,8 @@ require('lazy').setup({
         --
         -- See :h blink-cmp-config-keymap for defining your own keymap
         preset = 'enter',
+        ['<Tab>'] = { 'select_next', 'snippet_forward', 'fallback' },
+        ['<S-Tab>'] = { 'select_prev', 'snippet_backward', 'fallback' },
 
         -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
         --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
@@ -984,6 +986,26 @@ require('lazy').setup({
     end,
   },
   { 'refractalize/oil-git-status.nvim', dependencies = { 'stevearc/oil.nvim' }, config = true },
+  { -- Render ANSI color codes in logs. Codes stay in the buffer (hidden via conceal), so saving is safe.
+    'm00qek/baleia.nvim',
+    version = '*',
+    config = function()
+      local baleia = require('baleia').setup { strip_ansi_codes = false }
+      local function colorize(buf)
+        baleia.once(buf)
+        vim.api.nvim_buf_call(buf, function()
+          vim.cmd [[syntax match BaleiaAnsiCode /\e\[[0-9;:]*m/ conceal]]
+          vim.opt_local.conceallevel = 2
+          vim.opt_local.concealcursor = 'nc'
+        end)
+      end
+      vim.api.nvim_create_autocmd('BufReadPost', {
+        pattern = { '*.log', 'build-log.txt' },
+        callback = function(ev) colorize(ev.buf) end,
+      })
+      vim.api.nvim_create_user_command('BaleiaColorize', function() colorize(vim.api.nvim_get_current_buf()) end, {})
+    end,
+  },
 }, { ---@diagnostic disable-line: missing-fields
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the
