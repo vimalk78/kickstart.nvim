@@ -231,6 +231,16 @@ vim.keymap.set('n', 'c', '"_c')
 vim.keymap.set('n', 'C', '"_C')
 vim.keymap.set('n', '-', '<cmd>Oil<CR>', { desc = 'Open file browser (Oil)' })
 
+-- Python: fill required constructor args (dataclasses etc.) as snippet tab-stops
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'python',
+  callback = function(ev)
+    local fill = function() require('custom.fill_args').fill() end
+    vim.keymap.set('n', '<leader>fa', fill, { buffer = ev.buf, desc = '[F]ill [A]rgs' })
+    vim.keymap.set('i', '<C-l>', fill, { buffer = ev.buf, desc = 'Fill constructor args' })
+  end,
+})
+
 -- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
 -- vim.keymap.set("n", "<C-S-h>", "<C-w>H", { desc = "Move window to the left" })
 -- vim.keymap.set("n", "<C-S-l>", "<C-w>L", { desc = "Move window to the right" })
@@ -710,6 +720,27 @@ require('lazy').setup({
       })
 
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
+
+      -- pyright tags rename edits with annotationId but omits changeAnnotations
+      -- (even when the capability isn't advertised), and Neovim asserts on that.
+      -- Drop orphaned annotation ids so the edits apply as plain text edits.
+      local apply_workspace_edit = vim.lsp.util.apply_workspace_edit
+      vim.lsp.util.apply_workspace_edit = function(edit, encoding)
+        if edit and not edit.changeAnnotations then
+          local function strip(edits)
+            for _, e in ipairs(edits or {}) do
+              e.annotationId = nil
+            end
+          end
+          for _, change in ipairs(edit.documentChanges or {}) do
+            strip(change.edits)
+          end
+          for _, edits in pairs(edit.changes or {}) do
+            strip(edits)
+          end
+        end
+        return apply_workspace_edit(edit, encoding)
+      end
 
       for name, server in pairs(servers) do
         vim.lsp.config(name, server)
